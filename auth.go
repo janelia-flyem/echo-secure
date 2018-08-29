@@ -60,6 +60,7 @@ func configureOAuthClient(clientID, clientSecret, url string) {
 
 type jwtCustomClaims struct {
 	Email    string `json:"email"`
+	Level    string `json:"level"`
 	ImageURL string `json:"image-url"`
 	jwt.StandardClaims
 }
@@ -233,8 +234,14 @@ func tokenHandler(c echo.Context) error {
 	// Set claims
 	profile := profileFromSession(c)
 
+	level, ok := c.Get("level").(string)
+	if !ok {
+		level = "noauth"
+	}
+
 	claims := &jwtCustomClaims{
 		profile.Email,
+		level,
 		profile.ImageURL,
 		jwt.StandardClaims{
 			ExpiresAt: time.Now().Add(time.Hour * 50000).Unix(),

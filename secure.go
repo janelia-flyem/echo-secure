@@ -94,6 +94,11 @@ func (s EchoSecure) AuthMiddleware(authLevel AuthorizationLevel) echo.Middleware
 						Message:  "unauthorized user",
 						Internal: fmt.Errorf("user not authorized"),
 					}
+				} else {
+					// level exists
+					level, _ := s.config.AuthorizeChecker.Level(email)
+					levelstr, _ := StringFromLevel(level)
+					c.Set("level", levelstr)
 				}
 			}
 

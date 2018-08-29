@@ -20,14 +20,32 @@ const (
 // LevelFromString finds the level corresponding
 func LevelFromString(val string) (AuthorizationLevel, error) {
 	switch val {
-	case "read":
+	case "readonly":
 		return READ, nil
 	case "readwrite":
 		return READWRITE, nil
 	case "admin":
 		return ADMIN, nil
+	case "noauth":
+		return NOAUTH, nil
 	default:
 		return 0, fmt.Errorf("invalid authorization string")
+	}
+}
+
+// LevelFromString finds the level corresponding
+func StringFromLevel(level AuthorizationLevel) (string, error) {
+	switch level {
+	case READ:
+		return "readonly", nil
+	case READWRITE:
+		return "readwrite", nil
+	case ADMIN:
+		return "admin", nil
+	case NOAUTH:
+		return "noauth", nil
+	default:
+		return "", fmt.Errorf("invalid authorization string")
 	}
 }
 
@@ -40,7 +58,7 @@ type Authorizer interface {
 }
 
 // FileAuthorize implements Authorizer using a JSON file for authorization
-// that is dictionary of emails with values "read", "readwrite", "admin".
+// that is dictionary of emails with values "readonly", "readwrite", "admin".
 type FileAuthorize struct {
 	fileName        string
 	userPermissions map[string]string
