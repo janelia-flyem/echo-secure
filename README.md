@@ -5,7 +5,7 @@ This library has the following features:
 
 * Configures https for echo web framework.  It uses Let's Encrypt by default but allows manual specification of SSL certificate and key.
 * REST endpoints for /login and /logout, as well as /profile which returns the email and profile image of the authenticated user (uses Google oauth2).  Authenticated state is saved in a cookie.
-* Provides simple functionality to manage user authorization using a JSON file (TBD: using Google cloud datastore).  The file can be modified without requiring server restart.
+* Provides simple functionality to manage user authorization using a JSON file or an [http endpoint](https://github.com/janelia-flyem/appdata-store) that uses google datastore.  The file or datastore can be modified without requiring server restart.
 * Provides middleware for authentication and authorization of echo REST endpoints.
 * REST endpoint for /token that produces a JWT token for authentication.
 
@@ -51,5 +51,4 @@ Example:
 
 ## TODO
 
-* Add support for reading authorization information from Google cloud datastore
 * Add unit tests
