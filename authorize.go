@@ -4,7 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"net/http"
 	"os"
+	"time"
 )
 
 // AuthorizationLevel indicates the access level for given API
@@ -55,6 +57,94 @@ type Authorizer interface {
 
 	// Level returns the authorization level for the user
 	Level(user string) (AuthorizationLevel, error)
+}
+
+// DatastoreAuthorize implements Authorizer using the appdata-store cloud function http interface.
+type DatastoreAuthorize struct {
+	httpAddr        string
+	token           string
+	userPermissions map[string]string
+}
+
+// NewFileAuthorizer creates a FileAuthorize object
+func NewDatastoreAuthorizer(httpAddr string, token string) (DatastoreAuthorize, error) {
+	authList, err := loadDatastoreUsers(httpAddr, token)
+	if err != nil {
+		return DatastoreAuthorize{}, err
+	}
+
+	return DatastoreAuthorize{httpAddr, token, authList}, nil
+}
+
+func loadDatastoreUsers(httpAddr, token string) (map[string]string, error) {
+	datastoreClient := http.Client{
+		Timeout: time.Second * 60,
+	}
+
+	req, err := http.NewRequest(http.MethodGet, httpAddr+"/users", nil)
+	if err != nil {
+		return nil, fmt.Errorf("request failed")
+	}
+	req.Header.Set("Authorization", "Bearer "+token)
+	res, err := datastoreClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("request failed")
+	}
+
+	body, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		return nil, fmt.Errorf("request failed")
+	}
+
+	var authlist map[string]string
+	jsonErr := json.Unmarshal(body, &authlist)
+	if jsonErr != nil {
+		return nil, fmt.Errorf("error decoding json")
+	}
+
+	return authlist, nil
+}
+
+func (a DatastoreAuthorize) Authorize(user string, level AuthorizationLevel) bool {
+	perm, ok := a.userPermissions[user]
+	found := ok
+	if !ok {
+		// re-check file in case user was recently added
+		if authList2, err := loadDatastoreUsers(a.httpAddr, a.token); err != nil {
+			a.userPermissions = authList2
+			perm, found = a.userPermissions[user]
+		}
+	}
+
+	if found {
+		// authorization level of user satisfies requeted level
+		if templevel, err := LevelFromString(perm); templevel >= level && err == nil {
+			return true
+		}
+	}
+	return false
+}
+
+func (a DatastoreAuthorize) Level(user string) (AuthorizationLevel, error) {
+	perm, ok := a.userPermissions[user]
+	found := ok
+	if !ok {
+		// re-check file in case user was recently added
+		if authList2, err := loadDatastoreUsers(a.httpAddr, a.token); err != nil {
+			a.userPermissions = authList2
+			perm, found = a.userPermissions[user]
+		}
+	}
+
+	if found {
+		// authorization level of user satisfies requeted level
+		if level1, err := LevelFromString(perm); err == nil {
+			return level1, nil
+		} else {
+			return 0, err
+		}
+	}
+	return 0, fmt.Errorf("User not found")
 }
 
 // FileAuthorize implements Authorizer using a JSON file for authorization
