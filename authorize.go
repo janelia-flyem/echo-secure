@@ -99,7 +99,7 @@ func loadDatastoreUsers(httpAddr, token string) (map[string]string, error) {
 	var authlist map[string]string
 	jsonErr := json.Unmarshal(body, &authlist)
 	if jsonErr != nil {
-		return nil, fmt.Errorf("error decoding json")
+		return nil, fmt.Errorf("could not retrieve authorization information")
 	}
 
 	return authlist, nil
