@@ -88,7 +88,7 @@ func loginHandler(c echo.Context) error {
 		return fmt.Errorf("could not create oauth session: %v", err)
 	}
 	oauthFlowSession.Options = &sessions.Options{
-		MaxAge:   COOKIEEXPIRE,
+		MaxAge:   600,
 		HttpOnly: true,
 	}
 
