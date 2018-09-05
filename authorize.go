@@ -106,6 +106,10 @@ func loadDatastoreUsers(httpAddr, token string) (map[string]string, error) {
 }
 
 func (a DatastoreAuthorize) Authorize(user string, level AuthorizationLevel) bool {
+	// if the authorization level is disabled, return true
+	if level == NOAUTH {
+		return true
+	}
 	perm, ok := a.userPermissions[user]
 	found := ok
 	if !ok {
@@ -144,7 +148,8 @@ func (a DatastoreAuthorize) Level(user string) (AuthorizationLevel, error) {
 			return 0, err
 		}
 	}
-	return 0, fmt.Errorf("User not found")
+
+	return NOAUTH, nil
 }
 
 // FileAuthorize implements Authorizer using a JSON file for authorization
@@ -177,6 +182,10 @@ func NewFileAuthorizer(authFile string) (FileAuthorize, error) {
 }
 
 func (a FileAuthorize) Authorize(user string, level AuthorizationLevel) bool {
+	// if the authorization level is disabled, return true
+	if level == NOAUTH {
+		return true
+	}
 	perm, ok := a.userPermissions[user]
 	found := ok
 	if !ok {
@@ -215,5 +224,6 @@ func (a FileAuthorize) Level(user string) (AuthorizationLevel, error) {
 			return 0, err
 		}
 	}
-	return 0, fmt.Errorf("User not found")
+
+	return NOAUTH, nil
 }

@@ -87,7 +87,7 @@ func (s EchoSecure) AuthMiddleware(authLevel AuthorizationLevel) echo.Middleware
 			}
 
 			// check authorize if it exists
-			if s.enableAuthorize && authLevel > NOAUTH {
+			if s.enableAuthorize {
 				if isAuthorized := s.config.AuthorizeChecker.Authorize(email, authLevel); !isAuthorized {
 					return &echo.HTTPError{
 						Code:     http.StatusUnauthorized,

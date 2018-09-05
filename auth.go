@@ -223,7 +223,12 @@ func profileFromSession(c echo.Context) *Profile {
 
 func profileHandler(c echo.Context) error {
 	profile := profileFromSession(c)
-	return c.JSON(http.StatusOK, profile)
+	level, ok := c.Get("level").(string)
+	if !ok {
+		level = "noauth"
+	}
+	profileout := &ProfileAuth{profile, level}
+	return c.JSON(http.StatusOK, profileout)
 }
 
 func tokenHandler(c echo.Context) error {
@@ -257,6 +262,11 @@ func tokenHandler(c echo.Context) error {
 
 type Profile struct {
 	ImageURL, Email string
+}
+
+type ProfileAuth struct {
+	*Profile
+	AuthLevel string
 }
 
 // stripProfile returns a subset of a plus.Person.
