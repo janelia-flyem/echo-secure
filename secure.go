@@ -87,7 +87,7 @@ func (s EchoSecure) AuthMiddleware(authLevel AuthorizationLevel) echo.Middleware
 			}
 
 			// check authorize if it exists
-			if s.enableAuthorize {
+			if s.enableAuthorize && authLevel > NOAUTH {
 				if isAuthorized := s.config.AuthorizeChecker.Authorize(email, authLevel); !isAuthorized {
 					return &echo.HTTPError{
 						Code:     http.StatusUnauthorized,
@@ -147,9 +147,9 @@ func InitializeEchoSecure(e *echo.Echo, config SecureConfig, secret []byte) (Ech
 		e.GET("/oauth2callback", oauthCallbackHandler)
 
 		// requires login
-		e.POST("/logout", s.AuthMiddleware(READ)(logoutHandler))
-		e.GET("/profile", s.AuthMiddleware(READ)(profileHandler))
-		e.GET("/token", s.AuthMiddleware(READ)(tokenHandler))
+		e.POST("/logout", s.AuthMiddleware(NOAUTH)(logoutHandler))
+		e.GET("/profile", s.AuthMiddleware(NOAUTH)(profileHandler))
+		e.GET("/token", s.AuthMiddleware(NOAUTH)(tokenHandler))
 	}
 
 	// return object

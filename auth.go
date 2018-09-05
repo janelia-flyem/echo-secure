@@ -214,10 +214,6 @@ func profileFromSession(c echo.Context) *Profile {
 	if err != nil {
 		return nil
 	}
-	tok, ok := currSession.Values[oauthTokenSessionKey].(*oauth2.Token)
-	if !ok || !tok.Valid() {
-		return nil
-	}
 	profile, ok := currSession.Values[googleProfileSessionKey].(*Profile)
 	if !ok {
 		return nil
