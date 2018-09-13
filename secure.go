@@ -86,6 +86,9 @@ func (s EchoSecure) AuthMiddleware(authLevel AuthorizationLevel) echo.Middleware
 				currSession.Save(c.Request(), c.Response())
 			}
 
+			// set email so logger can potentially read
+			c.Set("email", email)
+
 			// check authorize if it exists
 			if s.enableAuthorize {
 				if isAuthorized := s.config.AuthorizeChecker.Authorize(email, authLevel); !isAuthorized {
