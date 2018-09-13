@@ -114,7 +114,7 @@ func (a DatastoreAuthorize) Authorize(user string, level AuthorizationLevel) boo
 	found := ok
 	if !ok {
 		// re-check file in case user was recently added
-		if authList2, err := loadDatastoreUsers(a.httpAddr, a.token); err != nil {
+		if authList2, err := loadDatastoreUsers(a.httpAddr, a.token); err == nil {
 			a.userPermissions = authList2
 			perm, found = a.userPermissions[user]
 		}
@@ -134,7 +134,7 @@ func (a DatastoreAuthorize) Level(user string) (AuthorizationLevel, error) {
 	found := ok
 	if !ok {
 		// re-check file in case user was recently added
-		if authList2, err := loadDatastoreUsers(a.httpAddr, a.token); err != nil {
+		if authList2, err := loadDatastoreUsers(a.httpAddr, a.token); err == nil {
 			a.userPermissions = authList2
 			perm, found = a.userPermissions[user]
 		}
@@ -190,7 +190,7 @@ func (a FileAuthorize) Authorize(user string, level AuthorizationLevel) bool {
 	found := ok
 	if !ok {
 		// re-check file in case user was recently added
-		if authList2, err := loadUsers(a.fileName); err != nil {
+		if authList2, err := loadUsers(a.fileName); err == nil {
 			a.userPermissions = authList2
 			perm, found = a.userPermissions[user]
 		}
@@ -210,7 +210,7 @@ func (a FileAuthorize) Level(user string) (AuthorizationLevel, error) {
 	found := ok
 	if !ok {
 		// re-check file in case user was recently added
-		if authList2, err := loadUsers(a.fileName); err != nil {
+		if authList2, err := loadUsers(a.fileName); err == nil {
 			a.userPermissions = authList2
 			perm, found = a.userPermissions[user]
 		}
