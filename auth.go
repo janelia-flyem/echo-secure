@@ -2,11 +2,11 @@ package secure
 
 import (
 	"encoding/gob"
+	"encoding/json"
 	"errors"
+	"io/ioutil"
 	"net/http"
 	"net/url"
-
-	plus "google.golang.org/api/plus/v1"
 
 	"github.com/gorilla/sessions"
 	"golang.org/x/net/context"
@@ -170,15 +170,37 @@ func oauthCallbackHandler(c echo.Context) error {
 	return c.Redirect(http.StatusFound, redirectURL)
 }
 
+type userInfo struct {
+	Sub           string `json:"sub"`
+	Name          string `json:"name"`
+	GivenName     string `json:"given_name"`
+	FamilyName    string `json:"family_name"`
+	Profile       string `json:"profile"`
+	Picture       string `json:"picture"`
+	Email         string `json:"email"`
+	EmailVerified bool   `json:"email_verified"`
+	Gender        string `json:"gender"`
+}
+
 // fetchProfile retrieves the Google+ profile of the user associated with the
 // provided OAuth token.
-func fetchProfile(ctx context.Context, tok *oauth2.Token) (*plus.Person, error) {
+func fetchProfile(ctx context.Context, tok *oauth2.Token) (*userInfo, error) {
 	client := oauth2.NewClient(ctx, OAuthConfig.TokenSource(ctx, tok))
-	plusService, err := plus.New(client)
+
+	resp, err := client.Get("https://www.googleapis.com/oauth2/v3/userinfo")
 	if err != nil {
 		return nil, err
 	}
-	return plusService.People.Get("me").Do()
+	defer resp.Body.Close()
+	data, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+	var result userInfo
+	if err := json.Unmarshal(data, &result); err != nil {
+		return nil, err
+	}
+	return &result, nil
 }
 
 // logoutHandler clears the default session.
@@ -269,10 +291,10 @@ type ProfileAuth struct {
 	AuthLevel string
 }
 
-// stripProfile returns a subset of a plus.Person.
-func stripProfile(p *plus.Person) *Profile {
+// stripProfile returns a subset of the user profile.
+func stripProfile(p *userInfo) *Profile {
 	return &Profile{
-		ImageURL: p.Image.Url,
-		Email:    p.Emails[0].Value,
+		ImageURL: p.Picture + "?sz=50",
+		Email:    p.Email,
 	}
 }
