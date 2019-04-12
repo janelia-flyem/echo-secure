@@ -163,7 +163,7 @@ func (s EchoSecure) StartEchoSecure(port int) {
 	portstr := strconv.Itoa(port)
 	if s.enableAuthenticate {
 		// setup oauth object
-		redirectURL := "https://" + s.config.Hostname + ":" + portstr + "/oauth2callback"
+		redirectURL := "https://" + s.config.Hostname + "/oauth2callback"
 		configureOAuthClient(s.config.ClientID, s.config.ClientSecret, redirectURL)
 	}
 
