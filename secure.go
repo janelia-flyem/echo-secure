@@ -146,12 +146,61 @@ func InitializeEchoSecure(e *echo.Echo, config SecureConfig, secret []byte) (Ech
 	if enableAuthenticate {
 		JWTSecret = secret
 
+		// swagger:operation GET /login user loginHandler
+		//
+		// Login user
+		//
+		// Login user redirecting to profile
+		//
+		// ---
+		// responses:
+		//   302:
+		//     description: "Redirect to /profile"
 		e.GET("/login", loginHandler)
 		e.GET("/oauth2callback", oauthCallbackHandler)
 
 		// requires login
+
+		// swagger:operation POST /logout user logoutHandler
+		//
+		// Logout user
+		//
+		// Clears session cookie for the user
+		//
+		// ---
+		// responses:
+		//   200:
+		//     description: "successful operation"
+		// security:
+		// - Bearer: []
 		e.POST("/logout", s.AuthMiddleware(NOAUTH)(logoutHandler))
+
+		// swagger:operation GET /profile user profileHandler
+		//
+		// Returns user information
+		//
+		// Returns user information
+		//
+		// ---
+		// responses:
+		//   200:
+		//     description: "successful operation"
+		// security:
+		// - Bearer: []
 		e.GET("/profile", s.AuthMiddleware(NOAUTH)(profileHandler))
+
+		// swagger:operation GET /token user tokenHandler
+		//
+		// Returns JWT user bearer token
+		//
+		// JWT token should be passed in header for authentication
+		//
+		// ---
+		// responses:
+		//   200:
+		//     description: "successful operation"
+		// security:
+		// - Bearer: []
 		e.GET("/token", s.AuthMiddleware(NOAUTH)(tokenHandler))
 	}
 
