@@ -43,6 +43,7 @@ func (s EchoSecure) AuthMiddleware(authLevel AuthorizationLevel) echo.Middleware
 			}
 
 			email := ""
+			imageurl := ""
 			// check for either Bearer token or cookie
 			auth := c.Request().Header.Get(echo.HeaderAuthorization)
 			l := len("Bearer")
@@ -63,6 +64,7 @@ func (s EchoSecure) AuthMiddleware(authLevel AuthorizationLevel) echo.Middleware
 					c.Set("user", token)
 					claims := token.Claims.(*jwtCustomClaims)
 					email = claims.Email
+					imageurl = claims.ImageURL
 				} else {
 					return &echo.HTTPError{
 						Code:     http.StatusUnauthorized,
@@ -81,6 +83,7 @@ func (s EchoSecure) AuthMiddleware(authLevel AuthorizationLevel) echo.Middleware
 					return c.Redirect(http.StatusFound, redirectUrl)
 				} else {
 					email = profile.Email
+					imageurl = profile.ImageURL
 				}
 
 				currSession.Save(c.Request(), c.Response())
@@ -88,6 +91,7 @@ func (s EchoSecure) AuthMiddleware(authLevel AuthorizationLevel) echo.Middleware
 
 			// set email so logger can potentially read
 			c.Set("email", email)
+			c.Set("imageurl", imageurl)
 
 			// check authorize if it exists
 			if s.enableAuthorize {
@@ -115,12 +119,13 @@ func (s EchoSecure) AuthMiddleware(authLevel AuthorizationLevel) echo.Middleware
 // API is created.  Authentication routes are addded in the default
 // echo context group.  Note: do not add auth middleware to the default context
 // since it will disable login.
-func InitializeEchoSecure(e *echo.Echo, config SecureConfig, secret []byte) (EchoSecure, error) {
+func InitializeEchoSecure(e *echo.Echo, config SecureConfig, secret []byte, sessionID string) (EchoSecure, error) {
 	// setup logging and panic recover
 	manCert := false
 	if config.SSLCert != "" && config.SSLKey != "" {
 		manCert = true
 	}
+	defaultSessionID = sessionID
 
 	if !manCert {
 		e.AutoTLSManager.Cache = autocert.DirCache("./cache")

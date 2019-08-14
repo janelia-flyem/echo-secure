@@ -22,7 +22,6 @@ import (
 )
 
 const (
-	defaultSessionID = "neuPrintHTTP"
 	// The following keys are used for the default session. For example:
 	//  session, _ := bookshelf.SessionStore.New(r, defaultSessionID)
 	//  session.Values[oauthTokenSessionKey]
@@ -41,6 +40,7 @@ const (
 // global to hold oauth configuration
 var OAuthConfig *oauth2.Config
 var JWTSecret []byte
+var defaultSessionID string
 
 func init() {
 	// Gob encoding for gorilla/sessions
