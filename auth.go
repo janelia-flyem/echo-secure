@@ -105,7 +105,8 @@ func loginHandler(c echo.Context) error {
 	// Use the session ID for the "state" parameter.
 	// This protects against CSRF (cross-site request forgery).
 	// See https://godoc.org/golang.org/x/oauth2#Config.AuthCodeURL for more detail.
-	url := OAuthConfig.AuthCodeURL(sessionID, oauth2.AccessTypeOnline)
+	//url := OAuthConfig.AuthCodeURL(sessionID, oauth2.AccessTypeOnline)
+	url := OAuthConfig.AuthCodeURL(sessionID, oauth2.SetAuthURLParam("prompt", "consent"), oauth2.SetAuthURLParam("access_type", "online"))
 	return c.Redirect(http.StatusFound, url)
 }
 
