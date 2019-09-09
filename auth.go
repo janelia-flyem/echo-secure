@@ -3,9 +3,11 @@ package secure
 import (
 	"encoding/gob"
 	"encoding/json"
+	"errors"
 	"io/ioutil"
 	"net/http"
-	//"net/url"
+	"net/url"
+	"strings"
 
 	"github.com/gorilla/sessions"
 	"golang.org/x/net/context"
@@ -119,14 +121,24 @@ func validateRedirectURL(path string) (string, error) {
 		return "/profile", nil
 	}
 
-	// TODO: add check to make sure redirect is either local or in the same domain
-
-	/*
-		// Ensure redirect URL is valid and not pointing to a different server.
+	// add check to make sure redirect is either local or from the same domain.
+	// non local query
+	if path[0] != '/' {
 		parsedURL, err := url.Parse(path)
 		if err != nil {
 			return "/profile", err
 		}
+		parts := strings.Split(parsedURL.Hostname(), ".")
+		if len(parts) >= 2 {
+			redDomain := parts[len(parts)-2] + "." + parts[len(parts)-1]
+			if redDomain != defaultDomain {
+				return "/profile", errors.New("Redirect must be to same domain")
+			}
+		}
+
+	}
+
+	/*
 		if parsedURL.IsAbs() {
 			return "/profile", errors.New("URL must not be absolute")
 		}
