@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
+	"net/url"
+	"strings"
 
 	"github.com/gorilla/sessions"
 	"golang.org/x/net/context"
@@ -166,7 +168,23 @@ func oauthCallbackHandler(c echo.Context) error {
 	sessionNew.Values[oauthTokenSessionKey] = tok
 	// Strip the profile to only the fields we need. Otherwise the struct is too big.
 	sessionNew.Values[googleProfileSessionKey] = stripProfile(profile)
+
+	// if the redirect url is going to a non local domain, set the cookie domain accordingly
+	// TODO: this needs to be changed to just set the cookie to the auth server domain
+	if redirectURL[0] != '/' {
+		u, err := url.Parse(redirectURL)
+		if err != nil {
+			return err
+		}
+
+		parts := strings.Split(u.Hostname(), ".")
+		domain := parts[len(parts)-2] + "." + parts[len(parts)-1]
+
+		sessionNew.Options.Domain = domain
+	}
+
 	if err := sessionNew.Save(c.Request(), c.Response()); err != nil {
+
 		return fmt.Errorf("could not save session: %v", err)
 	}
 
