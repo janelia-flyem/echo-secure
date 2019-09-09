@@ -71,14 +71,18 @@ func loginHandler(c echo.Context) error {
 	r := c.Request()
 	w := c.Response()
 
+	redirectURL, err := validateRedirectURL(c.FormValue("redirect"))
+	if err != nil {
+		return fmt.Errorf("invalid redirect URL: %v", err)
+	}
+
 	auto := c.QueryParam("auto")
 	if auto == "true" {
 		// check if already logged in
 		if currSession, err := session.Get(defaultSessionID, c); err == nil {
 			if profile, ok := currSession.Values[googleProfileSessionKey].(*Profile); ok && profile != nil {
 				currSession.Save(c.Request(), c.Response())
-				// there should be no redirect url if called in auto mode
-				return c.Redirect(http.StatusFound, "/profile")
+				return c.Redirect(http.StatusFound, redirectURL)
 			}
 		}
 	}
@@ -92,10 +96,6 @@ func loginHandler(c echo.Context) error {
 		HttpOnly: true,
 	}
 
-	redirectURL, err := validateRedirectURL(c.FormValue("redirect"))
-	if err != nil {
-		return fmt.Errorf("invalid redirect URL: %v", err)
-	}
 	oauthFlowSession.Values[oauthFlowRedirectKey] = redirectURL
 
 	if err := oauthFlowSession.Save(r, w); err != nil {
