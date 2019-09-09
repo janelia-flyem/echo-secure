@@ -230,7 +230,7 @@ func profileFromSession(c echo.Context) *Profile {
 		claims := user.Claims.(*jwtCustomClaims)
 		email := claims.Email
 		url := claims.ImageURL
-		return &Profile{email, url}
+		return &Profile{url, email}
 	}
 
 	currSession, err := session.Get(defaultSessionID, c)
