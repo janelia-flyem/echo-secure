@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"reflect"
 	"strconv"
+	"strings"
 )
 
 // SecureConfig provides configuration options when initializing echo
@@ -126,6 +127,11 @@ func InitializeEchoSecure(e *echo.Echo, config SecureConfig, secret []byte, sess
 		manCert = true
 	}
 	defaultSessionID = sessionID
+	defaultDomain = config.Hostname
+	parts := strings.Split(config.Hostname, ".")
+	if len(parts) >= 2 {
+		defaultDomain = parts[len(parts)-2] + "." + parts[len(parts)-1]
+	}
 
 	if !manCert {
 		e.AutoTLSManager.Cache = autocert.DirCache("./cache")

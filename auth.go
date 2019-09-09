@@ -5,8 +5,7 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
-	"net/url"
-	"strings"
+	//"net/url"
 
 	"github.com/gorilla/sessions"
 	"golang.org/x/net/context"
@@ -41,6 +40,7 @@ const (
 var OAuthConfig *oauth2.Config
 var JWTSecret []byte
 var defaultSessionID string
+var defaultDomain string
 
 func init() {
 	// Gob encoding for gorilla/sessions
@@ -169,19 +169,8 @@ func oauthCallbackHandler(c echo.Context) error {
 	// Strip the profile to only the fields we need. Otherwise the struct is too big.
 	sessionNew.Values[googleProfileSessionKey] = stripProfile(profile)
 
-	// if the redirect url is going to a non local domain, set the cookie domain accordingly
-	// TODO: this needs to be changed to just set the cookie to the auth server domain
-	if redirectURL[0] != '/' {
-		u, err := url.Parse(redirectURL)
-		if err != nil {
-			return err
-		}
-
-		parts := strings.Split(u.Hostname(), ".")
-		domain := parts[len(parts)-2] + "." + parts[len(parts)-1]
-
-		sessionNew.Options.Domain = domain
-	}
+	// set domain
+	sessionNew.Options.Domain = defaultDomain
 
 	if err := sessionNew.Save(c.Request(), c.Response()); err != nil {
 
