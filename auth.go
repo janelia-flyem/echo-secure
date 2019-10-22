@@ -232,13 +232,13 @@ func logoutHandler(c echo.Context) error {
 		return fmt.Errorf("could not get default session: %v", err)
 	}
 	currSession.Options.MaxAge = -1 // Clear session.
-	if err := currSession.Save(c.Request(), c.Response()); err != nil {
+	/*if err := currSession.Save(c.Request(), c.Response()); err != nil {
 		return fmt.Errorf("could not save session: %v", err)
 	}
 	redirectURL := c.FormValue("redirect")
 	if redirectURL == "" {
 		redirectURL = "/"
-	}
+	}*/
 
 	return c.HTML(http.StatusOK, "")
 }
