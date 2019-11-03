@@ -22,6 +22,8 @@ type SecureConfig struct {
 	ClientSecret     string     // Google client secret for outh (required for authentication)
 	AuthorizeChecker Authorizer // Checks whether user is authorized (default: authorize all)
 	Hostname         string     // Hostname is the location of the server that will be used for Google oauth callback
+	ProxyAuth        string     // ProxyAuth name of proxy server (optional)
+	ProxyInsecure    bool       // If true, disable secure connection
 }
 
 // EchoSecure handles secure connection configuration
@@ -81,7 +83,20 @@ func (s EchoSecure) AuthMiddleware(authLevel AuthorizationLevel) echo.Middleware
 					return c.Redirect(http.StatusFound, redirectUrl)
 				}
 				if profile, ok := currSession.Values[googleProfileSessionKey].(*Profile); !ok || profile == nil {
-					return c.Redirect(http.StatusFound, redirectUrl)
+					// call fetchProxyProfile if there is a proxy server
+					if ProxyAuth != "" {
+						profile, err := fetchProxyProfile(c)
+						if err != nil {
+							return c.Redirect(http.StatusFound, redirectUrl)
+						}
+						currSession.Values[googleProfileSessionKey] = stripProfile(profile)
+
+						email = profile.Email
+						imageurl = profile.Picture
+
+					} else {
+						return c.Redirect(http.StatusFound, redirectUrl)
+					}
 				} else {
 					email = profile.Email
 					imageurl = profile.ImageURL
@@ -128,6 +143,8 @@ func InitializeEchoSecure(e *echo.Echo, config SecureConfig, secret []byte, sess
 	}
 	defaultSessionID = sessionID
 	defaultDomain = config.Hostname
+	defaultProxyInsecure = config.ProxyInsecure
+	defaultHostName = "https://" + config.Hostname
 	parts := strings.Split(config.Hostname, ".")
 	if len(parts) >= 2 {
 		defaultDomain = parts[len(parts)-2] + "." + parts[len(parts)-1]
@@ -153,6 +170,7 @@ func InitializeEchoSecure(e *echo.Echo, config SecureConfig, secret []byte, sess
 	}
 
 	s := EchoSecure{e, secret, enableAuthenticate, enableAuthorize, manCert, config}
+	ProxyAuth = config.ProxyAuth
 
 	if enableAuthenticate {
 		JWTSecret = secret
@@ -221,6 +239,7 @@ func InitializeEchoSecure(e *echo.Echo, config SecureConfig, secret []byte, sess
 
 func (s EchoSecure) StartEchoSecure(port int) {
 	portstr := strconv.Itoa(port)
+	defaultHostName = defaultHostName + ":" + portstr
 	if s.enableAuthenticate {
 		// setup oauth object
 		redirectURL := "https://" + s.config.Hostname + ":" + portstr + "/oauth2callback"

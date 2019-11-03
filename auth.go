@@ -1,6 +1,7 @@
 package secure
 
 import (
+	"crypto/tls"
 	"encoding/gob"
 	"encoding/json"
 	"errors"
@@ -41,8 +42,11 @@ const (
 // global to hold oauth configuration
 var OAuthConfig *oauth2.Config
 var JWTSecret []byte
+var ProxyAuth string
 var defaultSessionID string
 var defaultDomain string
+var defaultHostName string
+var defaultProxyInsecure bool
 
 func init() {
 	// Gob encoding for gorilla/sessions
@@ -87,6 +91,18 @@ func loginHandler(c echo.Context) error {
 				return c.Redirect(http.StatusFound, redirectURL)
 			}
 		}
+	}
+
+	// redirect to the proxy server for login if available
+	if ProxyAuth != "" {
+		//return c.Redirect(http.StatusFound, ProxyAuth+"/login?"+c.QueryString())
+		if redirectURL[0] == '/' {
+			redirectURL = defaultHostName + redirectURL
+		}
+		if auto == "true" {
+			redirectURL = redirectURL + "&auto=true"
+		}
+		return c.Redirect(http.StatusFound, ProxyAuth+"/login?redirect="+redirectURL)
 	}
 
 	oauthFlowSession, err := session.Get(sessionID, c)
@@ -204,6 +220,53 @@ type userInfo struct {
 	Gender        string `json:"gender"`
 }
 
+// fetchProxyProfile retrieves a profile from the proxy server if the user is logged in.
+// Cookies need to be sent in the request
+func fetchProxyProfile(c echo.Context) (*userInfo, error) {
+	tr := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	}
+	if !defaultProxyInsecure {
+		tr = nil
+	}
+	client := http.Client{
+		Timeout:   time.Second * 60,
+		Transport: tr,
+	}
+	req, err := http.NewRequest(http.MethodGet, ProxyAuth+"/profile", nil)
+	if err != nil {
+		return nil, fmt.Errorf("profile request failed")
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	// copy cookies
+	cookies := c.Request().Cookies()
+	for _, cookie := range cookies {
+		req.AddCookie(cookie)
+	}
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	data, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	// load profile information into google profile struct
+	var result userInfo
+	var tresult ProfileAuth
+	if err := json.Unmarshal(data, &tresult); err != nil {
+		return nil, err
+	}
+	result.Email = tresult.Email
+	result.Picture = tresult.ImageURL
+
+	return &result, nil
+}
+
 // fetchProfile retrieves the Google+ profile of the user associated with the
 // provided OAuth token.
 func fetchProfile(ctx context.Context, tok *oauth2.Token) (*userInfo, error) {
@@ -227,11 +290,41 @@ func fetchProfile(ctx context.Context, tok *oauth2.Token) (*userInfo, error) {
 
 // logoutHandler clears the default session.
 func logoutHandler(c echo.Context) error {
+	// post logout to the proxy as well
+	if ProxyAuth != "" {
+		tr := &http.Transport{
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+		}
+		if !defaultProxyInsecure {
+			tr = nil
+		}
+		client := http.Client{
+			Timeout:   time.Second * 60,
+			Transport: tr,
+		}
+		req, err := http.NewRequest(http.MethodPost, ProxyAuth+"/logout", nil)
+		if err != nil {
+			return fmt.Errorf("logout request failed")
+		}
+
+		// copy cookies
+		cookies := c.Request().Cookies()
+		for _, cookie := range cookies {
+			req.AddCookie(cookie)
+		}
+
+		_, err = client.Do(req)
+		if err != nil {
+			return err
+		}
+	}
+
 	currSession, err := session.Get(defaultSessionID, c)
 	if err != nil {
 		return fmt.Errorf("could not get default session: %v", err)
 	}
 	currSession.Options.MaxAge = -1 // Clear session.
+
 	/*if err := currSession.Save(c.Request(), c.Response()); err != nil {
 		return fmt.Errorf("could not save session: %v", err)
 	}
