@@ -14,6 +14,9 @@ import (
 	"strings"
 )
 
+// Horrible Hack
+var ProxyPort = 0
+
 // SecureConfig provides configuration options when initializing echo
 type SecureConfig struct {
 	SSLCert          string     // filename for SSL certificate (should be .PEM file) (default auto TLS)
@@ -239,10 +242,15 @@ func InitializeEchoSecure(e *echo.Echo, config SecureConfig, secret []byte, sess
 
 func (s EchoSecure) StartEchoSecure(port int) {
 	portstr := strconv.Itoa(port)
-	defaultHostName = defaultHostName + ":" + portstr
+	portstr2 := portstr
+	if ProxyPort != 0 {
+		portstr2 = strconv.Itoa(ProxyPort)
+	}
+	defaultHostName = defaultHostName + ":" + portstr2
+
 	if s.enableAuthenticate {
 		// setup oauth object
-		redirectURL := "https://" + s.config.Hostname + ":" + portstr + "/oauth2callback"
+		redirectURL := "https://" + s.config.Hostname + ":" + portstr2 + "/oauth2callback"
 		configureOAuthClient(s.config.ClientID, s.config.ClientSecret, redirectURL)
 	}
 
