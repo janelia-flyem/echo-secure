@@ -102,6 +102,7 @@ func loginHandler(c echo.Context) error {
 		if auto == "true" {
 			redirectURL = redirectURL + "&auto=true"
 		}
+    redirectURL = url.QueryEscape(redirectURL)
 		return c.Redirect(http.StatusFound, ProxyAuth+"/login?redirect="+redirectURL)
 	}
 
