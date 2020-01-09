@@ -36,7 +36,10 @@ const (
 
 	AlgorithmHS256 = "HS256"
 
-	COOKIEEXPIRE = 86400 * 30
+  // TODO: cookies set to expire ~ 6 months from now. This is a patch
+  // to stop ugly errors from occurring in neuprint for at least six
+  // months. This is not a permanent fix!!!
+	COOKIEEXPIRE = 86400 * 30 * 6 // six months to expire
 )
 
 // global to hold oauth configuration
