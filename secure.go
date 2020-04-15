@@ -81,16 +81,23 @@ func (s EchoSecure) AuthMiddleware(authLevel AuthorizationLevel) echo.Middleware
 			} else {
 				currSession, err := session.Get(defaultSessionID, c)
 
-				redirectUrl := "/login?redirect=" + c.Request().URL.Path
+				type ErrorMessage struct {
+					Error string `json:"error"`
+				}
+
+				errorMessage := &ErrorMessage{
+					Error: "Please provide valid credentials",
+				}
+
 				if err != nil {
-					return c.Redirect(http.StatusFound, redirectUrl)
+     			return c.JSON(http.StatusUnauthorized, errorMessage)
 				}
 				if profile, ok := currSession.Values[googleProfileSessionKey].(*Profile); !ok || profile == nil {
 					// call fetchProxyProfile if there is a proxy server
 					if ProxyAuth != "" {
 						profile, err := fetchProxyProfile(c)
 						if err != nil {
-							return c.Redirect(http.StatusFound, redirectUrl)
+       				return c.JSON(http.StatusUnauthorized, errorMessage)
 						}
 						currSession.Values[googleProfileSessionKey] = stripProfile(profile)
 
@@ -98,7 +105,7 @@ func (s EchoSecure) AuthMiddleware(authLevel AuthorizationLevel) echo.Middleware
 						imageurl = profile.Picture
 
 					} else {
-						return c.Redirect(http.StatusFound, redirectUrl)
+       			return c.JSON(http.StatusUnauthorized, errorMessage)
 					}
 				} else {
 					email = profile.Email
