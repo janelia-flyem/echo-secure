@@ -260,6 +260,12 @@ func fetchProxyProfile(c echo.Context) (*userInfo, error) {
 		return nil, err
 	}
 
+	// if we don't get a 200 response back from the proxied auth server, then there is no reason to
+	// check the profile information and we should just bailout with the error status.
+	if resp.StatusCode != 200 {
+		return nil, fmt.Errorf(resp.Status)
+	}
+
 	// load profile information into google profile struct
 	var result userInfo
 	var tresult ProfileAuth
