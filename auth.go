@@ -16,11 +16,12 @@ import (
 	"golang.org/x/oauth2/google"
 
 	"fmt"
+	"time"
+
 	"github.com/dgrijalva/jwt-go"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo-contrib/session"
 	uuid "github.com/satori/go.uuid"
-	"time"
 )
 
 const (
@@ -36,9 +37,9 @@ const (
 
 	AlgorithmHS256 = "HS256"
 
-  // TODO: cookies set to expire ~ 6 months from now. This is a patch
-  // to stop ugly errors from occurring in neuprint for at least six
-  // months. This is not a permanent fix!!!
+	// TODO: cookies set to expire ~ 6 months from now. This is a patch
+	// to stop ugly errors from occurring in neuprint for at least six
+	// months. This is not a permanent fix!!!
 	COOKIEEXPIRE = 86400 * 30 * 6 // six months to expire
 )
 
@@ -105,7 +106,7 @@ func loginHandler(c echo.Context) error {
 		if auto == "true" {
 			redirectURL = redirectURL + "&auto=true"
 		}
-    redirectURL = url.QueryEscape(redirectURL)
+		redirectURL = url.QueryEscape(redirectURL)
 		return c.Redirect(http.StatusFound, ProxyAuth+"/login?redirect="+redirectURL)
 	}
 
