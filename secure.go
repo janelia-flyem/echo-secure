@@ -2,16 +2,17 @@ package secure
 
 import (
 	"fmt"
-	"github.com/dgrijalva/jwt-go"
-	"github.com/gorilla/sessions"
-	"github.com/labstack/echo"
-	"github.com/labstack/echo-contrib/session"
-	"github.com/labstack/echo/middleware"
-	"golang.org/x/crypto/acme/autocert"
 	"net/http"
 	"reflect"
 	"strconv"
 	"strings"
+
+	"github.com/dgrijalva/jwt-go"
+	"github.com/gorilla/sessions"
+	"github.com/labstack/echo-contrib/session"
+	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
+	"golang.org/x/crypto/acme/autocert"
 )
 
 // Horrible Hack
@@ -90,14 +91,14 @@ func (s EchoSecure) AuthMiddleware(authLevel AuthorizationLevel) echo.Middleware
 				}
 
 				if err != nil {
-     			return c.JSON(http.StatusUnauthorized, errorMessage)
+					return c.JSON(http.StatusUnauthorized, errorMessage)
 				}
 				if profile, ok := currSession.Values[googleProfileSessionKey].(*Profile); !ok || profile == nil {
 					// call fetchProxyProfile if there is a proxy server
 					if ProxyAuth != "" {
 						profile, err := fetchProxyProfile(c)
 						if err != nil {
-       				return c.JSON(http.StatusUnauthorized, errorMessage)
+							return c.JSON(http.StatusUnauthorized, errorMessage)
 						}
 						currSession.Values[googleProfileSessionKey] = stripProfile(profile)
 
@@ -105,7 +106,7 @@ func (s EchoSecure) AuthMiddleware(authLevel AuthorizationLevel) echo.Middleware
 						imageurl = profile.Picture
 
 					} else {
-       			return c.JSON(http.StatusUnauthorized, errorMessage)
+						return c.JSON(http.StatusUnauthorized, errorMessage)
 					}
 				} else {
 					email = profile.Email

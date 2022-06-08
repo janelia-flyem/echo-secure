@@ -19,8 +19,8 @@ import (
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
-	"github.com/labstack/echo"
 	"github.com/labstack/echo-contrib/session"
+	"github.com/labstack/echo/v4"
 	uuid "github.com/satori/go.uuid"
 )
 
@@ -77,7 +77,7 @@ type jwtCustomClaims struct {
 
 // loginHandler initiates an OAuth flow to authenticate the user.
 func loginHandler(c echo.Context) error {
-	sessionID := uuid.Must(uuid.NewV4()).String()
+	sessionID := uuid.NewV4().String()
 	r := c.Request()
 	w := c.Response()
 
