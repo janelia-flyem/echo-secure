@@ -3,7 +3,7 @@ package secure
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"os"
 	"time"
@@ -91,7 +91,7 @@ func loadDatastoreUsers(httpAddr, token string) (map[string]string, error) {
 		return nil, fmt.Errorf("request failed")
 	}
 
-	body, err := ioutil.ReadAll(res.Body)
+	body, err := io.ReadAll(res.Body)
 	if err != nil {
 		return nil, fmt.Errorf("request failed")
 	}
@@ -161,12 +161,12 @@ type FileAuthorize struct {
 
 func loadUsers(authFile string) (map[string]string, error) {
 	fin, err := os.Open(authFile)
-	defer fin.Close()
 	if err != nil {
 		err = fmt.Errorf("%s cannot be read", authFile)
 		return nil, err
 	}
-	byteData, _ := ioutil.ReadAll(fin)
+	defer fin.Close()
+	byteData, _ := io.ReadAll(fin)
 	var authlist map[string]string
 	json.Unmarshal(byteData, &authlist)
 	return authlist, nil

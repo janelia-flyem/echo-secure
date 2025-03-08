@@ -5,7 +5,7 @@ import (
 	"encoding/gob"
 	"encoding/json"
 	"errors"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 	"strings"
@@ -18,7 +18,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/dgrijalva/jwt-go"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/labstack/echo-contrib/session"
 	"github.com/labstack/echo/v4"
 	uuid "github.com/satori/go.uuid"
@@ -72,7 +72,7 @@ type jwtCustomClaims struct {
 	Email    string `json:"email"`
 	Level    string `json:"level"`
 	ImageURL string `json:"image-url"`
-	jwt.StandardClaims
+	jwt.RegisteredClaims
 }
 
 // loginHandler initiates an OAuth flow to authenticate the user.
@@ -255,7 +255,7 @@ func fetchProxyProfile(c echo.Context) (*userInfo, error) {
 		return nil, err
 	}
 	defer resp.Body.Close()
-	data, err := ioutil.ReadAll(resp.Body)
+	data, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
 	}
@@ -288,7 +288,7 @@ func fetchProfile(ctx context.Context, tok *oauth2.Token) (*userInfo, error) {
 		return nil, err
 	}
 	defer resp.Body.Close()
-	data, err := ioutil.ReadAll(resp.Body)
+	data, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
 	}
@@ -392,8 +392,8 @@ func tokenHandler(c echo.Context) error {
 		profile.Email,
 		level,
 		profile.ImageURL,
-		jwt.StandardClaims{
-			ExpiresAt: time.Now().Add(time.Hour * 50000).Unix(),
+		jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * 50000)),
 		},
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
